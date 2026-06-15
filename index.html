@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Employde — AI Interview Coach</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',sans-serif; background:#0a0a14; color:#fff; min-height:100vh; }
+
+/* NAVBAR */
+.navbar { display:flex; align-items:center; justify-content:space-between; padding:14px 40px; background:rgba(255,255,255,0.04); border-bottom:1px solid rgba(255,255,255,0.08); backdrop-filter:blur(10px); position:sticky; top:0; z-index:200; }
+.logo { font-size:22px; font-weight:800; background:linear-gradient(135deg,#a78bfa,#60a5fa,#34d399); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:-0.5px; }
+.team-badge { background:rgba(167,139,250,0.15); border:1px solid rgba(167,139,250,0.35); color:#a78bfa; padding:5px 14px; border-radius:20px; font-size:11px; font-weight:600; }
+
+/* STEPS NAV */
+.steps-nav { display:flex; align-items:center; gap:4px; padding:10px 30px; border-bottom:1px solid rgba(255,255,255,0.06); overflow-x:auto; background:rgba(0,0,0,0.3); }
+.step-pill { padding:5px 12px; border-radius:20px; font-size:11px; color:rgba(255,255,255,0.3); white-space:nowrap; transition:all 0.3s; cursor:pointer; }
+.step-pill.active { color:#a78bfa; background:rgba(167,139,250,0.12); border:1px solid rgba(167,139,250,0.25); }
+.step-pill.done { color:#34d399; }
+.step-arrow { color:rgba(255,255,255,0.12); font-size:12px; }
+
+/* PAGES */
+.page { display:none; }
+.page.active { display:block; }
+
+/* LOADING */
+.loading-overlay { display:none; position:fixed; inset:0; background:rgba(10,10,20,0.97); z-index:1000; align-items:center; justify-content:center; flex-direction:column; gap:16px; }
+.loading-overlay.show { display:flex; }
+.spinner { width:44px; height:44px; border:3px solid rgba(167,139,250,0.2); border-top-color:#a78bfa; border-radius:50%; animation:spin 0.8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+@keyframes wave { 0%,100%{height:4px}50%{height:24px} }
+@keyframes speakPulse { 0%{transform:scale(1);opacity:1}100%{transform:scale(1.3);opacity:0} }
+.wave-bar { display:inline-block; }
+
+/* FIXED POPUPS */
+.popup-fixed { position:fixed; top:75px; right:16px; width:270px; z-index:500; display:flex; flex-direction:column; gap:7px; pointer-events:none; }
+.popup-item { background:rgba(10,10,20,0.96); border-radius:10px; padding:9px 13px; font-size:12px; display:flex; align-items:flex-start; gap:8px; animation:slideIn 0.3s ease; border-left:3px solid transparent; backdrop-filter:blur(12px); box-shadow:0 4px 20px rgba(0,0,0,0.4); }
+@keyframes slideIn { from{opacity:0;transform:translateX(20px)} }
+.popup-item.good { border-left-color:#34d399; }
+.popup-item.warn { border-left-color:#fbbf24; }
+.popup-item.tip { border-left-color:#60a5fa; }
+.popup-item.eye { border-left-color:#a78bfa; background:rgba(167,139,250,0.15); }
+.popup-emoji { font-size:14px; margin-top:1px; }
+.popup-text { color:rgba(255,255,255,0.85); line-height:1.4; font-size:11px; flex:1; }
+
+/* EYE ANCHOR OVERLAY */
+.eye-anchor { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(167,139,250,0.12); border:2px solid rgba(167,139,250,0.5); border-radius:12px; padding:12px 20px; font-size:13px; font-weight:600; color:#a78bfa; z-index:600; display:none; backdrop-filter:blur(10px); animation:eyePulse 2s infinite; pointer-events:none; }
+@keyframes eyePulse { 0%,100%{border-color:rgba(167,139,250,0.5)}50%{border-color:rgba(167,139,250,1)} }
+
+/* ===================== */
+/* HOME PAGE */
+/* ===================== */
+.home-hero { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:60px 40px; position:relative; overflow:hidden; }
+.home-hero::before { content:''; position:absolute; width:600px; height:600px; background:radial-gradient(circle,rgba(167,139,250,0.12) 0%,transparent 70%); top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; }
+.home-badge { display:inline-block; background:rgba(167,139,250,0.1); border:1px solid rgba(167,139,250,0.3); color:#a78bfa; padding:7px 18px; border-radius:20px; font-size:12px; font-weight:600; margin-bottom:24px; letter-spacing:0.3px; }
+.home-title { font-size:64px; font-weight:900; line-height:1.05; margin-bottom:20px; letter-spacing:-2px; }
+.home-title .grad { background:linear-gradient(135deg,#a78bfa,#60a5fa,#34d399); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.home-sub { font-size:17px; color:rgba(255,255,255,0.55); max-width:560px; margin:0 auto 40px; line-height:1.7; }
+.home-btns { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-bottom:60px; }
+.btn-hero { background:linear-gradient(135deg,#a78bfa,#60a5fa); color:white; border:none; padding:15px 36px; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; transition:all 0.3s; }
+.btn-hero:hover { transform:translateY(-3px); box-shadow:0 10px 35px rgba(167,139,250,0.4); }
+.btn-hero-out { background:transparent; border:1px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.7); padding:15px 36px; border-radius:12px; font-size:15px; cursor:pointer; transition:all 0.3s; }
+.btn-hero-out:hover { border-color:rgba(167,139,250,0.5); color:#a78bfa; }
+
+/* FEATURES GRID */
+.features-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; max-width:1000px; margin:0 auto; padding:0 40px 60px; }
+.feat-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:22px; transition:all 0.3s; }
+.feat-card:hover { border-color:rgba(167,139,250,0.3); transform:translateY(-3px); }
+.feat-icon { font-size:28px; margin-bottom:12px; }
+.feat-card h3 { font-size:14px; font-weight:600; margin-bottom:6px; }
+.feat-card p { font-size:12px; color:rgba(255,255,255,0.45); line-height:1.6; }
+.feat-tag { display:inline-block; background:rgba(167,139,250,0.1); color:#a78bfa; font-size:10px; padding:2px 8px; border-radius:10px; margin-top:8px; font-weight:600; }
+
+/* HOW IT WORKS */
+.how-section { padding:40px; max-width:1000px; margin:0 auto; }
+.how-title { font-size:28px; font-weight:700; text-align:center; margin-bottom:32px; }
+.steps-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+.step-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:20px; text-align:center; }
+.step-num-big { width:40px; height:40px; background:linear-gradient(135deg,#a78bfa,#60a5fa); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; margin:0 auto 12px; }
+.step-card h4 { font-size:13px; font-weight:600; margin-bottom:6px; }
+.step-card p { font-size:11px; color:rgba(255,255,255,0.45); line-height:1.5; }
+
+/* AGNES SECTION */
+.agnes-section { padding:40px; max-width:1000px; margin:0 auto; }
+.agnes-models { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:24px; }
+.model-card { border-radius:14px; padding:20px; text-align:center; }
+.model-card.text { background:rgba(96,165,250,0.08); border:1px solid rgba(96,165,250,0.25); }
+.model-card.image { background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.25); }
+.model-card.video { background:rgba(167,139,250,0.08); border:1px solid rgba(167,139,250,0.25); }
+.model-icon { font-size:32px; margin-bottom:10px; }
+.model-card h3 { font-size:14px; font-weight:600; margin-bottom:6px; }
+.model-card p { font-size:11px; color:rgba(255,255,255,0.5); line-height:1.5; }
+
+/* ===================== */
+/* FORMS & LAYOUT */
+/* ===================== */
+.container { max-width:860px; margin:0 auto; padding:36px 40px; }
+.page-title { font-size:26px; font-weight:700; margin-bottom:5px; }
+.page-sub { color:rgba(255,255,255,0.45); font-size:13px; margin-bottom:28px; }
+.card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); border-radius:14px; padding:22px; margin-bottom:14px; }
+.card-green { border-color:rgba(52,211,153,0.25); background:rgba(52,211,153,0.04); }
+.card-purple { border-color:rgba(167,139,250,0.25); background:rgba(167,139,250,0.04); }
+.form-group { margin-bottom:18px; }
+.form-group label { display:block; font-size:12px; font-weight:600; color:rgba(255,255,255,0.65); margin-bottom:7px; text-transform:uppercase; letter-spacing:0.4px; }
+.form-group input, .form-group textarea { width:100%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:12px 14px; color:#fff; font-size:14px; font-family:inherit; transition:border-color 0.3s; resize:none; }
+.form-group input:focus, .form-group textarea:focus { outline:none; border-color:#a78bfa; }
+.upload-area { border:2px dashed rgba(167,139,250,0.3); border-radius:12px; padding:22px; text-align:center; cursor:pointer; transition:all 0.3s; background:rgba(167,139,250,0.03); }
+.upload-area:hover { border-color:#a78bfa; background:rgba(167,139,250,0.08); }
+.upload-area input { display:none; }
+.btn-primary { width:100%; background:linear-gradient(135deg,#a78bfa,#60a5fa); color:white; border:none; padding:14px; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer; transition:all 0.3s; }
+.btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(167,139,250,0.35); }
+.btn-primary:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+.btn-secondary { background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.55); border:1px solid rgba(255,255,255,0.09); padding:12px 22px; border-radius:10px; font-size:13px; cursor:pointer; }
+.btn-next { flex:1; background:linear-gradient(135deg,#a78bfa,#60a5fa); color:white; border:none; padding:13px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.3s; }
+.btn-next:hover { transform:translateY(-2px); }
+.action-row { display:flex; gap:12px; margin-top:22px; }
+.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-bottom:14px; }
+.info-item { background:rgba(255,255,255,0.04); border-radius:10px; padding:13px; }
+.info-item h4 { font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:#a78bfa; margin-bottom:5px; }
+.info-item p { font-size:12px; color:rgba(255,255,255,0.65); line-height:1.5; }
+.tips-box { background:rgba(52,211,153,0.07); border:1px solid rgba(52,211,153,0.2); border-radius:10px; padding:13px; margin-top:10px; }
+.tips-box h4 { color:#34d399; font-size:11px; margin-bottom:6px; }
+.tips-box p { font-size:12px; color:rgba(255,255,255,0.65); line-height:1.5; }
+.skill-tags { display:flex; flex-wrap:wrap; gap:6px; }
+.skill-tag { background:rgba(167,139,250,0.12); border:1px solid rgba(167,139,250,0.25); color:#a78bfa; padding:3px 10px; border-radius:20px; font-size:11px; }
+.added-tag { background:rgba(52,211,153,0.1); border-color:rgba(52,211,153,0.25); color:#34d399; }
+.match-score { display:flex; align-items:center; gap:14px; background:rgba(167,139,250,0.08); border:1px solid rgba(167,139,250,0.2); border-radius:12px; padding:14px; margin-bottom:18px; }
+.score-big { font-size:42px; font-weight:800; background:linear-gradient(135deg,#a78bfa,#60a5fa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.download-btn { display:inline-block; margin-top:10px; background:linear-gradient(135deg,#34d399,#059669); color:white; border:none; padding:9px 22px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; }
+
+/* ===================== */
+/* INTERVIEW PAGE */
+/* ===================== */
+.interview-layout { display:grid; grid-template-columns:1fr 320px; gap:14px; padding:14px 20px; height:calc(100vh - 100px); }
+.interview-main { display:flex; flex-direction:column; gap:10px; overflow:hidden; }
+.interviewer-box { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:18px; flex:1; display:flex; flex-direction:column; min-height:0; }
+.int-header { display:flex; align-items:center; gap:11px; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.07); }
+.ai-avatar { width:42px; height:42px; background:linear-gradient(135deg,#a78bfa,#60a5fa); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.live-badge { margin-left:auto; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.25); color:#ef4444; padding:3px 9px; border-radius:20px; font-size:10px; font-weight:600; display:flex; align-items:center; gap:4px; }
+.live-dot { width:5px; height:5px; background:#ef4444; border-radius:50%; animation:pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+.prog-bar { background:rgba(255,255,255,0.07); height:3px; border-radius:2px; margin:7px 0 12px; }
+.prog-fill { height:100%; background:linear-gradient(90deg,#a78bfa,#60a5fa); border-radius:2px; transition:width 0.5s; }
+.agnes-video-box { border-radius:12px; overflow:hidden; border:2px solid rgba(167,139,250,0.35); margin-bottom:10px; display:none; }
+.agnes-video-hdr { background:rgba(167,139,250,0.1); padding:6px 13px; font-size:10px; color:#a78bfa; font-weight:600; display:flex; align-items:center; gap:6px; }
+#agnesVideo { width:100%; max-height:200px; object-fit:cover; background:#111; display:block; }
+.question-text { font-size:16px; font-weight:600; line-height:1.5; flex:1; display:flex; align-items:center; color:rgba(255,255,255,0.92); }
+.answer-box { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:14px; }
+.rec-status { display:none; background:rgba(239,68,68,0.07); border:1px solid rgba(239,68,68,0.2); border-radius:7px; padding:7px 12px; margin-bottom:8px; align-items:center; gap:7px; font-size:11px; color:#ef4444; font-weight:600; }
+.rec-status.show { display:flex; }
+.answer-box textarea { width:100%; background:transparent; border:none; color:#fff; font-size:13px; font-family:inherit; resize:none; height:75px; line-height:1.7; }
+.answer-box textarea:focus { outline:none; }
+.answer-box textarea::placeholder { color:rgba(255,255,255,0.25); }
+.answer-controls { display:flex; align-items:center; justify-content:space-between; padding-top:9px; border-top:1px solid rgba(255,255,255,0.07); margin-top:7px; }
+.mic-btn { display:flex; align-items:center; gap:6px; background:rgba(167,139,250,0.1); border:1px solid rgba(167,139,250,0.25); color:#a78bfa; padding:7px 14px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; transition:all 0.3s; }
+.mic-btn.recording { background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.3); color:#ef4444; }
+.submit-sm { background:linear-gradient(135deg,#a78bfa,#60a5fa); color:white; border:none; padding:8px 18px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; }
+.followup-loading { display:none; background:rgba(167,139,250,0.07); border:1px solid rgba(167,139,250,0.2); border-radius:10px; padding:14px; text-align:center; margin-top:8px; }
+.followup-loading.show { display:block; }
+
+/* SIDEBAR */
+.interview-sidebar { display:flex; flex-direction:column; gap:10px; overflow-y:auto; }
+.camera-box { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:14px; overflow:hidden; }
+.cam-header { padding:9px 13px; font-size:11px; font-weight:600; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; gap:6px; }
+#videoFeed { width:100%; height:160px; object-fit:cover; background:#000; display:block; }
+.cam-stats { padding:10px 13px; display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.stat-pill { background:rgba(255,255,255,0.04); border-radius:8px; padding:7px; text-align:center; }
+.stat-lbl { font-size:9px; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:0.4px; }
+.stat-val { font-size:12px; font-weight:600; margin-top:2px; }
+.sg { color:#34d399; } .sw { color:#fbbf24; } .sb { color:#ef4444; }
+
+/* CONFIDENCE SCORE */
+.conf-box { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:14px; }
+.conf-title { font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:rgba(255,255,255,0.35); margin-bottom:12px; }
+.conf-meter { margin-bottom:10px; }
+.conf-label { display:flex; justify-content:space-between; font-size:11px; color:rgba(255,255,255,0.55); margin-bottom:4px; }
+.conf-bar { background:rgba(255,255,255,0.07); height:6px; border-radius:3px; overflow:hidden; }
+.conf-fill { height:100%; border-radius:3px; transition:width 1s ease; }
+.conf-score-big { text-align:center; margin-bottom:12px; }
+.conf-num { font-size:36px; font-weight:800; background:linear-gradient(135deg,#a78bfa,#60a5fa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+/* EMOJI STATUS */
+.emoji-status { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:14px; text-align:center; }
+.emoji-big { font-size:36px; margin-bottom:6px; transition:all 0.3s; }
+.emoji-label { font-size:11px; color:rgba(255,255,255,0.45); }
+.emoji-score-text { font-size:13px; font-weight:600; color:#34d399; margin-top:4px; }
+
+/* CHECKLIST */
+.checklist-box { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:14px; }
+.checklist-title { font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:rgba(255,255,255,0.35); margin-bottom:10px; }
+.check-item { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:11px; color:rgba(255,255,255,0.6); }
+.check-item:last-child { border-bottom:none; }
+.check-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.cd-green { background:#34d399; }
+.cd-yellow { background:#fbbf24; }
+.cd-red { background:#ef4444; }
+
+/* Q LIST */
+.q-list-box { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:13px; }
+.q-lbl { font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:rgba(255,255,255,0.3); margin-bottom:9px; }
+.q-item { padding:6px 9px; border-radius:7px; font-size:11px; color:rgba(255,255,255,0.4); margin-bottom:3px; display:flex; align-items:center; gap:6px; }
+.q-item.active { background:rgba(167,139,250,0.1); color:#a78bfa; }
+.q-item.done { color:#34d399; }
+.q-num { min-width:17px; height:17px; background:rgba(255,255,255,0.07); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:600; }
+
+/* ===================== */
+/* QUIZ MCQ */
+/* ===================== */
+.quiz-container { max-width:650px; margin:0 auto; padding:36px 40px; }
+.quiz-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); border-radius:18px; padding:32px; }
+.quiz-q { font-size:17px; font-weight:600; margin-bottom:22px; line-height:1.5; }
+.mcq-options { display:flex; flex-direction:column; gap:9px; margin-bottom:18px; }
+.mcq-opt { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:12px 15px; cursor:pointer; font-size:13px; transition:all 0.2s; display:flex; align-items:center; gap:10px; }
+.mcq-opt:hover { border-color:#a78bfa; background:rgba(167,139,250,0.08); }
+.mcq-opt.selected { border-color:#a78bfa; background:rgba(167,139,250,0.12); color:#a78bfa; }
+.mcq-opt.correct { border-color:#34d399; background:rgba(52,211,153,0.1); color:#34d399; }
+.mcq-opt.wrong { border-color:#ef4444; background:rgba(239,68,68,0.08); color:#ef4444; }
+.opt-letter { min-width:22px; height:22px; background:rgba(255,255,255,0.08); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; }
+
+/* ===================== */
+/* REPORT */
+/* ===================== */
+.score-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:11px; margin-bottom:16px; }
+.score-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:13px; padding:18px; text-align:center; }
+.score-num { font-size:38px; font-weight:800; line-height:1; margin-bottom:5px; }
+.score-lbl { font-size:11px; color:rgba(255,255,255,0.4); }
+.verdict-box { background:rgba(52,211,153,0.07); border:1px solid rgba(52,211,153,0.2); border-radius:13px; padding:18px; text-align:center; margin-bottom:16px; }
+.verdict-box.fail { background:rgba(239,68,68,0.07); border-color:rgba(239,68,68,0.2); }
+.s-and-i { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
+.si-card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:13px; padding:16px; }
+.si-item { display:flex; gap:7px; font-size:12px; color:rgba(255,255,255,0.65); margin-bottom:7px; }
+
+/* ===================== */
+/* MODEL VIDEO */
+/* ===================== */
+.model-container { max-width:860px; margin:0 auto; padding:36px 40px; }
+.model-video-box { background:rgba(255,255,255,0.03); border:1px solid rgba(167,139,250,0.25); border-radius:14px; overflow:hidden; margin-bottom:18px; }
+.model-video-hdr { background:rgba(167,139,250,0.08); padding:12px 18px; display:flex; align-items:center; gap:10px; }
+#modelVideo { width:100%; max-height:400px; object-fit:cover; background:#111; display:block; }
+.kp-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:11px; margin-bottom:16px; }
+.kp-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:11px; padding:14px; font-size:12px; color:rgba(255,255,255,0.65); }
+.kp-card span { display:block; color:#a78bfa; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:5px; }
+
+@media(max-width:768px) {
+  .interview-layout { grid-template-columns:1fr; height:auto; }
+  .features-grid { grid-template-columns:1fr; }
+  .steps-row { grid-template-columns:1fr 1fr; }
+  .score-grid { grid-template-columns:1fr 1fr; }
+  .s-and-i { grid-template-columns:1fr; }
+  .agnes-models { grid-template-columns:1fr; }
+  .kp-grid { grid-template-columns:1fr; }
+  .home-title { font-size:38px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="logo">EMPLOYDE</div>
+  <div class="team-badge">Agnes AI Hackathon @ SMU 2026</div>
+</nav>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div style="font-size:16px;font-weight:600;color:#a78bfa;" id="loadingTitle">Processing...</div>
+  <div style="font-size:12px;color:rgba(255,255,255,0.4);" id="loadingSub">Agnes AI is working for you</div>
+</div>
+
+<!-- EYE ANCHOR -->
+<div class="eye-anchor" id="eyeAnchor">👁️ Look here — maintain eye contact with camera</div>
+
+<!-- FIXED POPUPS -->
+<div class="popup-fixed" id="popupFixed"></div>
+
+<!-- STEPS NAV (hidden on home) -->
+<div class="steps-nav" id="stepsNav" style="display:none;">
+  <div class="step-pill active" id="sp1">① Input</div>
+  <div class="step-arrow">›</div>
+  <div class="step-pill" id="sp2">② Research</div>
+  <div class="step-arrow">›</div>
+  <div class="step-pill" id="sp3">③ Resume</div>
+  <div class="step-arrow">›</div>
+  <div class="step-pill" id="sp4">④ Interview</div>
+  <div class="step-arrow">›</div>
+  <div class="step-pill" id="sp5">⑤ Quiz</div>
+  <div class="step-arrow">›</div>
+  <div class="step-pill" id="sp6">⑥ Report</div>
+  <div class="step-arrow">›</div>
+  <div class="step-pill" id="sp7">⑦ Model Answer</div>
+</div>
+
+<!-- ======================== -->
+<!-- HOME PAGE -->
+<!-- ======================== -->
+<div class="page active" id="page-home">
+  <div class="home-hero">
+    <div class="home-badge">🏆 Agnes AI Hackathon @ SMU 2026 — Employde 5</div>
+    <h1 class="home-title">
+      Train How You<br><span class="grad">Deliver.</span> Not Just<br>What You Say.
+    </h1>
+    <p class="home-sub">The only interview prep platform that trains you with live AI simulations, real-time feedback, and iterative practice — helping you perform with confidence, clarity, and presence.</p>
+    <div class="home-btns">
+      <button class="btn-hero" onclick="startFlow()">Start Interview Prep →</button>
+      <button class="btn-hero-out" onclick="document.getElementById('how-section').scrollIntoView({behavior:'smooth'})">How It Works</button>
+    </div>
+
+    <!-- AGNES MODELS -->
+    <div class="agnes-section" style="width:100%;max-width:900px;">
+      <div style="font-size:13px;color:rgba(255,255,255,0.35);text-align:center;margin-bottom:16px;text-transform:uppercase;letter-spacing:1px;">Powered by Agnes AI</div>
+      <div class="agnes-models">
+        <div class="model-card text">
+          <div class="model-icon">📝</div>
+          <h3 style="color:#60a5fa;">Agnes-2.0-Flash</h3>
+          <p>Question generation, company research, resume optimization, real-time coaching scripts</p>
+        </div>
+        <div class="model-card image">
+          <div class="model-icon">🖼️</div>
+          <h3 style="color:#34d399;">Agnes-Image-2.0-Flash</h3>
+          <p>Visual Guard coaching popups, resume image output, report card, quiz result card</p>
+        </div>
+        <div class="model-card video">
+          <div class="model-icon">🎬</div>
+          <h3 style="color:#a78bfa;">Agnes-Video-V2.0</h3>
+          <p>Live AI interviewer videos, follow-up question videos, model answer demonstration</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="features-grid">
+    <div class="feat-card">
+      <div class="feat-icon">👁️</div>
+      <h3>Eye-Anchor Feature</h3>
+      <p>Strategic popups anchor your gaze to the camera lens, permanently eliminating shifty eyes during interviews.</p>
+      <div class="feat-tag">Agnes Image V2.0</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">😊</div>
+      <h3>Live Emoji Status</h3>
+      <p>Real-time ambient emoji indicator tracks your sentiment dynamically using Green, Yellow, Red shape analysis.</p>
+      <div class="feat-tag">Real-time Analysis</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">✅</div>
+      <h3>Readiness Checklist</h3>
+      <p>Persistent tracking hub checking body posture, expression stability, pace, content accuracy and industry alignment.</p>
+      <div class="feat-tag">Live Coaching</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🎬</div>
+      <h3>AI Video Interviewer</h3>
+      <p>Agnes Video V2.0 generates a real AI interviewer asking questions based on your resume and target company.</p>
+      <div class="feat-tag">Agnes Video V2.0</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📊</div>
+      <h3>Confidence Score</h3>
+      <p>Multi-dimensional performance tracker analysing voice, pacing, facial stability and presence in real-time.</p>
+      <div class="feat-tag">AI Analysis</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🎯</div>
+      <h3>Model Answer Video</h3>
+      <p>After your interview, watch Agnes AI demonstrate the perfect answer with natural human body language and improvisation.</p>
+      <div class="feat-tag">Agnes Video V2.0</div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="how-section" id="how-section">
+    <div class="how-title">How It Works</div>
+    <div class="steps-row">
+      <div class="step-card">
+        <div class="step-num-big">1</div>
+        <h4>Input</h4>
+        <p>Upload resume, paste job description, enter company name</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num-big">2</div>
+        <h4>Research + Resume</h4>
+        <p>Agnes researches company and optimizes your resume as downloadable image</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num-big">3</div>
+        <h4>Live Interview</h4>
+        <p>AI video interviewer asks questions with real-time coaching popups</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num-big">4</div>
+        <h4>Report + Model</h4>
+        <p>Get performance report card and watch AI demonstrate the perfect answer</p>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:32px;">
+      <button class="btn-hero" onclick="startFlow()">Get Started →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== -->
+<!-- STEP 1: INPUT -->
+<!-- ======================== -->
+<div class="page" id="page-input">
+  <div class="container">
+    <div class="page-title">Let's prepare your interview 🚀</div>
+    <div class="page-sub">Fill in your details — Agnes AI does everything else</div>
+    <div class="card">
+      <div class="form-group">
+        <label>Company Name *</label>
+        <input type="text" id="companyName" placeholder="e.g. Google, DBS Bank, Grab, Shopee..." />
+      </div>
+      <div class="form-group">
+        <label>Your Resume</label>
+        <div class="upload-area" onclick="document.getElementById('resumeFile').click()" id="uploadArea">
+          <input type="file" id="resumeFile" accept=".txt,.pdf,.doc,.docx" onchange="handleResume(event)" />
+          <div style="font-size:26px;margin-bottom:7px;">📄</div>
+          <p style="font-size:13px;color:rgba(255,255,255,0.45);">Click to upload resume</p>
+          <p style="font-size:10px;color:rgba(255,255,255,0.25);margin-top:3px;">PDF, TXT supported</p>
+          <div id="resumeFileName" style="color:#34d399;font-size:12px;font-weight:600;margin-top:7px;"></div>
+        </div>
+        <textarea id="resumeText" rows="3" placeholder="Or paste resume text here..." style="margin-top:9px;"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Job Description *</label>
+        <textarea id="jobDescText" rows="6" placeholder="Paste the full job description here — requirements, responsibilities, skills needed..." onclick="this.focus()" style="cursor:text;"></textarea>
+      </div>
+      <button class="btn-primary" onclick="startApp()" id="startBtn">Start with Agnes AI →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== -->
+<!-- STEP 2: RESEARCH -->
+<!-- ======================== -->
+<div class="page" id="page-research">
+  <div class="container">
+    <div class="page-title">Company Research 🏢</div>
+    <div class="page-sub">Agnes-2.0-Flash researched your target company</div>
+    <div id="researchContent"></div>
+    <div class="action-row">
+      <button class="btn-secondary" onclick="goTo('page-input',1)">← Back</button>
+      <button class="btn-next" onclick="goTo('page-resume',3)">View Optimized Resume →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== -->
+<!-- STEP 3: RESUME -->
+<!-- ======================== -->
+<div class="page" id="page-resume">
+  <div class="container">
+    <div class="page-title">Resume Optimizer 📄</div>
+    <div class="page-sub">Agnes-2.0-Flash rewrote your resume • Agnes-Image-2.0-Flash generated downloadable image</div>
+    <div id="resumeContent"></div>
+    <div class="action-row">
+      <button class="btn-secondary" onclick="goTo('page-research',2)">← Back</button>
+      <button class="btn-next" onclick="goTo('page-interview',4)">Start Live Interview →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== -->
+<!-- STEP 4: INTERVIEW -->
+<!-- ======================== -->
+<div class="page" id="page-interview">
+  <div class="interview-layout">
+    <div class="interview-main">
+      <div class="interviewer-box">
+        <div class="int-header">
+          <div class="ai-avatar">🤖</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;">Alex — AI Interviewer</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.35);" id="intCompany">Powered by Agnes AI</div>
+          </div>
+          <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+        </div>
+
+        <div style="font-size:10px;color:#a78bfa;font-weight:600;" id="qNum">Question 1 of 2</div>
+        <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:50%"></div></div>
+
+        <!-- AI AVATAR SPEAKING ANIMATION -->
+        <div id="aiAvatarBox" style="background:linear-gradient(135deg,rgba(167,139,250,0.1),rgba(96,165,250,0.1));border:2px solid rgba(167,139,250,0.3);border-radius:14px;padding:20px;margin-bottom:12px;display:flex;align-items:center;gap:20px;">
+          <!-- AVATAR FACE -->
+          <div style="flex-shrink:0;position:relative;">
+            <div id="avatarCircle" style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,#a78bfa,#60a5fa);display:flex;align-items:center;justify-content:center;font-size:40px;position:relative;transition:all 0.3s;">
+              🧑‍💼
+            </div>
+            <!-- SPEAKING RINGS -->
+            <div id="speakRing1" style="display:none;position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(167,139,250,0.5);animation:speakPulse 1s ease infinite;"></div>
+            <div id="speakRing2" style="display:none;position:absolute;inset:-12px;border-radius:50%;border:2px solid rgba(167,139,250,0.3);animation:speakPulse 1s ease 0.3s infinite;"></div>
+            <div id="speakRing3" style="display:none;position:absolute;inset:-18px;border-radius:50%;border:2px solid rgba(167,139,250,0.15);animation:speakPulse 1s ease 0.6s infinite;"></div>
+          </div>
+
+          <!-- SPEECH BUBBLE + WAVEFORM -->
+          <div style="flex:1;">
+            <div style="font-size:11px;color:#a78bfa;font-weight:600;margin-bottom:6px;">Alex is speaking...</div>
+            <!-- WAVEFORM BARS -->
+            <div id="waveform" style="display:none;align-items:flex-end;gap:3px;height:30px;margin-bottom:8px;">
+              <div class="wave-bar" style="width:4px;background:#a78bfa;border-radius:2px;animation:wave 0.8s ease infinite;"></div>
+              <div class="wave-bar" style="width:4px;background:#a78bfa;border-radius:2px;animation:wave 0.8s ease 0.1s infinite;"></div>
+              <div class="wave-bar" style="width:4px;background:#a78bfa;border-radius:2px;animation:wave 0.8s ease 0.2s infinite;"></div>
+              <div class="wave-bar" style="width:4px;background:#a78bfa;border-radius:2px;animation:wave 0.8s ease 0.3s infinite;"></div>
+              <div class="wave-bar" style="width:4px;background:#a78bfa;border-radius:2px;animation:wave 0.8s ease 0.4s infinite;"></div>
+              <div class="wave-bar" style="width:4px;background:#60a5fa;border-radius:2px;animation:wave 0.8s ease 0.5s infinite;"></div>
+              <div class="wave-bar" style="width:4px;background:#60a5fa;border-radius:2px;animation:wave 0.8s ease 0.6s infinite;"></div>
+              <div class="wave-bar" style="width:4px;background:#60a5fa;border-radius:2px;animation:wave 0.8s ease 0.7s infinite;"></div>
+              <div class="wave-bar" style="width:4px;background:#a78bfa;border-radius:2px;animation:wave 0.8s ease 0.2s infinite;"></div>
+              <div class="wave-bar" style="width:4px;background:#a78bfa;border-radius:2px;animation:wave 0.8s ease 0.4s infinite;"></div>
+              <div class="wave-bar" style="width:4px;background:#34d399;border-radius:2px;animation:wave 0.8s ease 0.1s infinite;"></div>
+              <div class="wave-bar" style="width:4px;background:#34d399;border-radius:2px;animation:wave 0.8s ease 0.3s infinite;"></div>
+            </div>
+            <!-- QUESTION TEXT IN SPEECH BUBBLE -->
+            <div id="questionText" style="font-size:14px;font-weight:600;line-height:1.6;color:rgba(255,255,255,0.92);">
+              Welcome to Employde! Your personalised AI interview is ready. Click Start Answering when ready 🎯
+            </div>
+          </div>
+        </div>
+
+        <!-- AGNES VIDEO (shown if video is ready) -->
+        <div class="agnes-video-box" id="agnesVideoBox">
+          <div class="agnes-video-hdr">🎬 Agnes-Video-V2.0 — AI Interviewer<span style="margin-left:auto;opacity:0.4;font-size:9px;">Powered by Agnes AI</span></div>
+          <video id="agnesVideo" controls autoplay style="width:100%;max-height:195px;object-fit:cover;background:#111;display:block;"></video>
+        </div>
+
+      </div>
+      <div class="answer-box">
+        <div class="rec-status" id="recStatus">
+          <div class="live-dot"></div>Recording...<span id="recTimer" style="margin-left:auto;opacity:0.5;">0s</span>
+        </div>
+        <textarea id="answerText" placeholder="Speak or type your answer here..."></textarea>
+        <div class="answer-controls">
+          <button class="mic-btn" id="micBtn" onclick="toggleMic()">🎤 Start Answering</button>
+          <button class="submit-sm" id="submitBtn" onclick="submitAnswer()">Done → Follow Up</button>
+        </div>
+      </div>
+      <div class="followup-loading" id="followupLoading">
+        <div style="font-size:13px;color:#a78bfa;font-weight:600;" id="followupText">🧠 Agnes AI is analysing...</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:3px;">Generating personalised follow up video</div>
+        <div class="spinner" style="width:24px;height:24px;margin:9px auto 0;"></div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="interview-sidebar">
+      <!-- CAMERA -->
+      <div class="camera-box">
+        <div class="cam-header" id="camHeader">📹 Your Camera — Live</div>
+        <div style="position:relative;background:#000;min-height:180px;">
+          <video id="videoFeed" autoplay muted playsinline style="width:100%;height:180px;object-fit:cover;display:block;transform:scaleX(-1);"></video>
+          <div id="camOffMsg" style="display:none;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:rgba(255,255,255,0.4);font-size:12px;text-align:center;padding:12px;">
+            <span style="font-size:24px;">📷</span>
+            Click Allow Camera<br>in your browser
+          </div>
+        </div>
+        <div class="cam-stats">
+          <div class="stat-pill"><div class="stat-lbl">Confidence</div><div class="stat-val" id="sConf">—</div></div>
+          <div class="stat-pill"><div class="stat-lbl">Posture</div><div class="stat-val" id="sPost">—</div></div>
+          <div class="stat-pill"><div class="stat-lbl">Eye Contact</div><div class="stat-val" id="sEye">—</div></div>
+          <div class="stat-pill"><div class="stat-lbl">Pace</div><div class="stat-val" id="sPace">—</div></div>
+        </div>
+      </div>
+
+      <!-- EMOJI STATUS -->
+      <div class="emoji-status">
+        <div class="emoji-big" id="emojiBig">😐</div>
+        <div class="emoji-label">Live Sentiment</div>
+        <div class="emoji-score-text" id="emojiLabel">Waiting...</div>
+      </div>
+
+      <!-- CONFIDENCE SCORE -->
+      <div class="conf-box">
+        <div class="conf-title">Confidence Score</div>
+        <div class="conf-score-big"><div class="conf-num" id="confNum">—</div><div style="font-size:10px;color:rgba(255,255,255,0.35);">Overall</div></div>
+        <div class="conf-meter">
+          <div class="conf-label"><span>Content</span><span id="cContent">0%</span></div>
+          <div class="conf-bar"><div class="conf-fill" id="fContent" style="width:0%;background:#60a5fa;"></div></div>
+        </div>
+        <div class="conf-meter">
+          <div class="conf-label"><span>Pace</span><span id="cPace">0%</span></div>
+          <div class="conf-bar"><div class="conf-fill" id="fPace" style="width:0%;background:#34d399;"></div></div>
+        </div>
+        <div class="conf-meter">
+          <div class="conf-label"><span>Delivery</span><span id="cDelivery">0%</span></div>
+          <div class="conf-bar"><div class="conf-fill" id="fDelivery" style="width:0%;background:#a78bfa;"></div></div>
+        </div>
+      </div>
+
+      <!-- READINESS CHECKLIST -->
+      <div class="checklist-box">
+        <div class="checklist-title">Readiness Checklist</div>
+        <div class="check-item"><div class="check-dot cd-green" id="chkPosture"></div>Body Posture</div>
+        <div class="check-item"><div class="check-dot cd-yellow" id="chkExpr"></div>Expression Stability</div>
+        <div class="check-item"><div class="check-dot cd-green" id="chkPace"></div>Pace & Enunciation</div>
+        <div class="check-item"><div class="check-dot cd-yellow" id="chkContent"></div>Content Accuracy</div>
+        <div class="check-item"><div class="check-dot cd-red" id="chkIndustry"></div>Industry Alignment</div>
+      </div>
+
+      <!-- Q LIST -->
+      <div class="q-list-box">
+        <div class="q-lbl">Questions</div>
+        <div id="qList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== -->
+<!-- STEP 5: QUIZ -->
+<!-- ======================== -->
+<div class="page" id="page-quiz">
+  <div class="quiz-container">
+    <div class="page-title">Company Knowledge Quiz 🧠</div>
+    <div class="page-sub">Agnes-2.0-Flash generated MCQ • Agnes-Image-2.0-Flash creates result card</div>
+    <div class="quiz-card">
+      <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:7px;" id="quizProg">Question 1 of 5</div>
+      <div class="prog-bar"><div class="prog-fill" id="quizProgFill" style="width:20%"></div></div>
+      <div class="quiz-q" id="quizQ">Loading...</div>
+      <div class="mcq-options" id="mcqOpts"></div>
+      <div id="quizFeedback" style="font-size:12px;padding:10px;border-radius:8px;display:none;margin-bottom:10px;"></div>
+      <button class="btn-primary" id="quizNextBtn" onclick="nextQuiz()" style="display:none;">Next →</button>
+    </div>
+    <div id="quizResultBox" style="margin-top:16px;text-align:center;display:none;"></div>
+  </div>
+</div>
+
+<!-- ======================== -->
+<!-- STEP 6: REPORT -->
+<!-- ======================== -->
+<div class="page" id="page-report">
+  <div class="container" style="max-width:900px;">
+    <div class="page-title">Performance Report 🎯</div>
+    <div class="page-sub">Agnes-2.0-Flash analysed your interview • Agnes-Image-2.0-Flash generated report card</div>
+    <div id="reportContent"></div>
+    <div id="reportImgBox" style="text-align:center;margin:16px 0;display:none;">
+      <img id="reportImg" style="max-width:100%;border-radius:12px;border:1px solid rgba(255,255,255,0.09);" />
+    </div>
+    <div class="action-row">
+      <button class="btn-next" onclick="generateModelAnswer()">Watch Model Answer Video →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== -->
+<!-- STEP 7: MODEL ANSWER -->
+<!-- ======================== -->
+<div class="page" id="page-model">
+  <div class="model-container">
+    <div class="page-title">Model Answer Video 🎬</div>
+    <div class="page-sub">Agnes-Video-V2.0 — Watch how this question should be answered with natural human delivery</div>
+    <div class="model-video-box" id="modelVideoBox" style="display:none;">
+      <div class="model-video-hdr">
+        <span style="font-size:16px;">🎬</span>
+        <div>
+          <div style="font-size:13px;font-weight:600;">Agnes AI — Model Answer Demonstration</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.35);">Natural body language • Real speech patterns • Human improvisation • Professional delivery</div>
+        </div>
+      </div>
+      <video id="modelVideo" controls style="width:100%;max-height:400px;object-fit:cover;background:#111;display:block;"></video>
+    </div>
+    <div id="modelLoading" style="text-align:center;padding:36px;">
+      <div class="spinner" style="margin:0 auto 14px;"></div>
+      <div style="color:#a78bfa;font-weight:600;font-size:14px;">🎬 Agnes-Video-V2.0 generating model answer...</div>
+      <div style="color:rgba(255,255,255,0.35);font-size:11px;margin-top:5px;">Creating natural human-like demonstration video</div>
+    </div>
+    <div id="modelContent"></div>
+    <div class="action-row" style="margin-top:20px;">
+      <button class="btn-next" onclick="resetApp()">Start New Interview →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========================
+// STATE
+// ========================
+let S = {
+  company:'',resume:'',jd:'',
+  questions:[],answers:[],currentQ:0,
+  videoUrls:[],companyData:null,
+  resumeData:null,reportData:null,
+  quizQuestions:[],quizIdx:0,quizScore:0,
+  isRec:false,recognition:null,
+  recSecs:0,recInt:null,
+  confScores:{content:0,pace:0,delivery:0},
+  wordCount:0
+};
+
+// ========================
+// NAVIGATION
+// ========================
+function startFlow() {
+  document.getElementById('stepsNav').style.display = 'flex';
+  goTo('page-input', 1);
+}
+
+function goTo(pageId, step) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  for (let i=1;i<=7;i++) {
+    const el = document.getElementById('sp'+i);
+    if (!el) continue;
+    el.className = 'step-pill' + (i<step?' done':i===step?' active':'');
+  }
+  window.scrollTo(0,0);
+  if (pageId==='page-interview') initInterview();
+}
+
+function showLoad(t,s) {
+  document.getElementById('loadingTitle').textContent=t;
+  document.getElementById('loadingSub').textContent=s||'';
+  document.getElementById('loadingOverlay').classList.add('show');
+}
+function hideLoad() { document.getElementById('loadingOverlay').classList.remove('show'); }
+
+// ========================
+// RESUME UPLOAD
+// ========================
+function handleResume(e) {
+  const f = e.target.files[0]; if (!f) return;
+  document.getElementById('resumeFileName').textContent = '✅ '+f.name;
+  document.getElementById('uploadArea').style.borderColor = '#34d399';
+  const r = new FileReader();
+  r.onload = ev => { document.getElementById('resumeText').value = ev.target.result; };
+  r.readAsText(f);
+}
+
+// ========================
+// STEP 1 START
+// ========================
+async function startApp() {
+  const company = document.getElementById('companyName').value.trim();
+  const resume = document.getElementById('resumeText').value.trim();
+  const jd = document.getElementById('jobDescText').value.trim();
+  if (!company||!jd) { alert('Please enter Company Name and Job Description!'); return; }
+  S.company=company; S.resume=resume; S.jd=jd;
+  const btn = document.getElementById('startBtn');
+  btn.disabled=true; btn.textContent='Processing...';
+  showLoad('🧠 Agnes-2.0-Flash is working...','Researching company, optimizing resume, generating questions');
+  try {
+    const [researchRes,resumeRes,qRes] = await Promise.all([
+      fetch('/api/research-company',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyName:company})}).then(r=>r.json()),
+      fetch('/api/optimize-resume',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({resumeText:resume,jobDescText:jd,companyName:company})}).then(r=>r.json()),
+      fetch('/api/generate-questions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyName:company,resumeText:resume,jobDescText:jd})}).then(r=>r.json())
+    ]);
+    S.companyData=researchRes; S.resumeData=resumeRes;
+    S.questions=qRes.questions||[]; S.quizQuestions=researchRes.quizQuestions||[];
+    renderResearch(); renderResume(); renderQList();
+    document.getElementById('loadingTitle').textContent='🎬 Agnes-Video-V2.0 creating interviewer videos...';
+    document.getElementById('loadingSub').textContent='Generating 2 AI interviewer videos (~2-3 mins)';
+    try {
+      const vRes = await fetch('/api/generate-videos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({questions:S.questions,companyName:company})}).then(r=>r.json());
+      S.videoUrls=vRes.videos||[];
+    } catch(e) { console.log('Video gen failed:',e); S.videoUrls=[]; }
+    hideLoad(); goTo('page-research',2);
+  } catch(err) { hideLoad(); alert('Error: '+err.message); }
+  btn.disabled=false; btn.textContent='Start with Agnes AI →';
+}
+
+// ========================
+// STEP 2: RESEARCH
+// ========================
+function renderResearch() {
+  const d=S.companyData; if (!d) return;
+  document.getElementById('researchContent').innerHTML=`
+    <div class="card">
+      <div style="font-size:22px;font-weight:700;margin-bottom:14px;background:linear-gradient(135deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">${S.company}</div>
+      <div class="info-grid">
+        <div class="info-item"><h4>Overview</h4><p>${d.overview||'—'}</p></div>
+        <div class="info-item"><h4>Founded</h4><p>${d.founded||'—'}</p></div>
+        <div class="info-item"><h4>Products & Services</h4><p>${d.products||'—'}</p></div>
+        <div class="info-item"><h4>Recent News</h4><p>${d.recentNews||'—'}</p></div>
+        <div class="info-item"><h4>Culture & Values</h4><p>${d.culture||'—'}</p></div>
+        <div class="info-item"><h4>Why Join</h4><p>${d.whyJoin||'—'}</p></div>
+      </div>
+      <div class="tips-box"><h4>💡 Interview Tips for ${S.company}</h4><p>${d.interviewTips||'—'}</p></div>
+    </div>`;
+}
+
+// ========================
+// STEP 3: RESUME
+// ========================
+function renderResume() {
+  const d=S.resumeData;
+  if (!d||d.error) { document.getElementById('resumeContent').innerHTML=`<div class="card"><p style="color:rgba(255,255,255,0.4);font-size:13px;">No resume provided. Add on input page for optimization.</p></div>`; return; }
+  const skills=(d.skills||[]).map(s=>`<span class="skill-tag">${s}</span>`).join('');
+  const added=(d.addedKeywords||[]).map(k=>`<span class="skill-tag added-tag">+ ${k}</span>`).join('');
+  const imps=(d.improvements||[]).map(i=>`<div class="si-item"><span>✅</span><span>${i}</span></div>`).join('');
+  const exp=(d.experience||[]).map(e=>`<div style="margin-bottom:10px;"><div style="font-weight:600;font-size:12px;">${e.title} — ${e.company}</div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin:2px 0;">${e.duration}</div>${(e.bullets||[]).map(b=>`<div style="font-size:11px;color:rgba(255,255,255,0.6);padding-left:9px;margin:2px 0;">• ${b}</div>`).join('')}</div>`).join('');
+  const imgHtml = d.imageUrl ? `<div style="text-align:center;margin-top:16px;"><div style="font-size:12px;color:#34d399;font-weight:600;margin-bottom:9px;">📥 Optimized resume as image — Agnes-Image-2.0-Flash</div><img src="${d.imageUrl}" style="max-width:100%;border-radius:11px;border:1px solid rgba(255,255,255,0.09);" /><br><a href="${d.imageUrl}" download="employde-resume.png" class="download-btn">⬇ Download Resume Image</a></div>` : '<div style="font-size:12px;color:rgba(255,255,255,0.35);text-align:center;padding:14px;">Image generation processing...</div>';
+  document.getElementById('resumeContent').innerHTML=`
+    <div class="match-score"><div class="score-big">${d.matchScore||0}%</div><div><div style="font-weight:600;font-size:14px;">Resume Match Score</div><div style="font-size:11px;color:rgba(255,255,255,0.4);">Optimized for ${S.company}</div></div></div>
+    <div class="card card-green"><div style="font-size:13px;font-weight:600;margin-bottom:10px;">✅ Optimized Resume</div><div style="margin-bottom:10px;"><div style="font-size:10px;color:#a78bfa;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">Summary</div><p style="font-size:12px;color:rgba(255,255,255,0.65);line-height:1.6;">${d.summary||''}</p></div><div style="margin-bottom:10px;"><div style="font-size:10px;color:#a78bfa;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">Skills</div><div class="skill-tags">${skills}</div></div><div><div style="font-size:10px;color:#a78bfa;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">Experience</div>${exp}</div></div>
+    <div class="card"><div style="font-size:13px;font-weight:600;margin-bottom:10px;">📈 Keywords Added</div><div class="skill-tags">${added}</div><div style="margin-top:12px;">${imps}</div></div>
+    ${imgHtml}`;
+}
+
+// ========================
+// STEP 4: INTERVIEW
+// ========================
+function renderQList() {
+  document.getElementById('qList').innerHTML = S.questions.map((q,i)=>`<div class="q-item" id="qi${i}"><div class="q-num">${i+1}</div><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${q.question.substring(0,42)}...</div></div>`).join('');
+}
+
+function initInterview() {
+  document.getElementById('intCompany').textContent = `Interviewing for ${S.company}`;
+
+  // Hide offline message initially
+  const offMsg = document.getElementById('camOffMsg');
+  if (offMsg) offMsg.style.display = 'none';
+
+  // Request camera
+  navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:'user'}, audio:false})
+    .then(stream => {
+      const vid = document.getElementById('videoFeed');
+      vid.srcObject = stream;
+      vid.onloadedmetadata = () => vid.play();
+      document.getElementById('camHeader').innerHTML = '📹 Your Camera — <span style="color:#34d399;">Live ✅</span>';
+      console.log('✅ Camera started!');
+      startAnalysis();
+    })
+    .catch(err => {
+      console.log('❌ Camera error:', err.message);
+      document.getElementById('camHeader').innerHTML = '📹 Camera — <span style="color:#ef4444;">Allow in browser!</span>';
+      if (offMsg) offMsg.style.display = 'flex';
+      addPopup('warn','📷','Allow camera access in your browser for live analysis!');
+    });
+
+  if (S.questions.length > 0) {
+    // Small delay to let page render
+    setTimeout(() => showQuestion(), 500);
+  }
+  startEyeAnchor();
+}
+
+function showQuestion() {
+  const q=S.questions[S.currentQ]; if (!q) return;
+  document.getElementById('questionText').textContent=q.question;
+  document.getElementById('qNum').textContent=`Question ${S.currentQ+1} of ${S.questions.length}`;
+  document.getElementById('progFill').style.width=`${((S.currentQ+1)/S.questions.length)*100}%`;
+  document.getElementById('answerText').value='';
+
+  // Update Q list
+  S.questions.forEach((_,i) => {
+    const el=document.getElementById('qi'+i); if (!el) return;
+    el.className='q-item'+(i<S.currentQ?' done':'')+(i===S.currentQ?' active':'');
+    el.querySelector('.q-num').textContent=i<S.currentQ?'✓':i+1;
+  });
+
+  // Check if Agnes video is ready
+  const vid=(S.videoUrls||[]).find(v=>v.id===q.id);
+  const box=document.getElementById('agnesVideoBox');
+  const ve=document.getElementById('agnesVideo');
+
+  if (vid&&vid.url) {
+    // Show Agnes Video
+    box.style.display='block';
+    document.getElementById('aiAvatarBox').style.display='none';
+    ve.src=vid.url; ve.play();
+    addPopup('good','🎬','Agnes-Video-V2.0 AI Interviewer!');
+  } else {
+    // Use animated avatar + Text to Speech
+    box.style.display='none';
+    document.getElementById('aiAvatarBox').style.display='flex';
+    speakQuestion(q.question);
+  }
+
+  addPopup('tip','💡','STAR method: Situation → Task → Action → Result');
+}
+
+// SPEAKING ANIMATION + TTS
+function speakQuestion(text) {
+  // Start speaking animation
+  startSpeaking();
+
+  // Text to Speech
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.85;
+    u.pitch = 1.0;
+    u.volume = 1;
+
+    // Try to use a good voice
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(v =>
+      v.name.includes('Google UK English Male') ||
+      v.name.includes('Microsoft David') ||
+      v.name.includes('Alex') ||
+      (v.lang === 'en-US' && v.name.includes('Male'))
+    ) || voices.find(v => v.lang.startsWith('en'));
+    if (preferred) u.voice = preferred;
+
+    u.onstart = () => startSpeaking();
+    u.onend = () => stopSpeaking();
+    u.onerror = () => stopSpeaking();
+
+    window.speechSynthesis.speak(u);
+    addPopup('good','🗣️','Alex is asking your question out loud!');
+  }
+}
+
+function startSpeaking() {
+  // Show rings and waveform
+  document.getElementById('speakRing1').style.display='block';
+  document.getElementById('speakRing2').style.display='block';
+  document.getElementById('speakRing3').style.display='block';
+  document.getElementById('waveform').style.display='flex';
+  // Pulse avatar
+  document.getElementById('avatarCircle').style.boxShadow='0 0 20px rgba(167,139,250,0.5)';
+  document.getElementById('avatarCircle').style.transform='scale(1.05)';
+}
+
+function stopSpeaking() {
+  document.getElementById('speakRing1').style.display='none';
+  document.getElementById('speakRing2').style.display='none';
+  document.getElementById('speakRing3').style.display='none';
+  document.getElementById('waveform').style.display='none';
+  document.getElementById('avatarCircle').style.boxShadow='none';
+  document.getElementById('avatarCircle').style.transform='scale(1)';
+  addPopup('tip','🎤','Alex finished asking — start your answer!');
+}
+
+// EYE ANCHOR
+let eyeAnchorInt = null;
+function startEyeAnchor() {
+  const el = document.getElementById('eyeAnchor');
+  eyeAnchorInt = setInterval(() => {
+    if (Math.random() > 0.6) {
+      el.style.display = 'block';
+      addPopup('eye','👁️','Eye-Anchor: Look directly at the camera lens!');
+      setTimeout(() => { el.style.display='none'; }, 3000);
+    }
+  }, 18000);
+}
+
+// MIC
+function toggleMic() {
+  if (!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)) { alert('Use Chrome for speech!'); return; }
+  if (S.isRec) {
+    S.recognition?.stop(); S.isRec=false;
+    document.getElementById('micBtn').textContent='🎤 Start Answering';
+    document.getElementById('micBtn').classList.remove('recording');
+    document.getElementById('recStatus').classList.remove('show');
+    clearInterval(S.recInt); S.recSecs=0;
+    addPopup('good','✅','Answer recorded! Click Done to continue');
+  } else {
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    S.recognition=new SR(); S.recognition.continuous=true; S.recognition.interimResults=true; S.recognition.lang='en-US';
+    S.recognition.onresult=e=>{
+      let t=''; for(let i=0;i<e.results.length;i++) t+=e.results[i][0].transcript;
+      document.getElementById('answerText').value=t;
+      S.wordCount=t.split(' ').length;
+      const wpm=Math.round((S.wordCount/Math.max(S.recSecs,1))*60);
+      document.getElementById('sPace').textContent=wpm+' wpm';
+      document.getElementById('sPace').className='stat-val '+(wpm>170?'sw':wpm<60&&S.wordCount>5?'sw':'sg');
+      // Update content score live
+      const cs=Math.min(95,S.wordCount*2);
+      S.confScores.content=cs;
+      document.getElementById('cContent').textContent=cs+'%';
+      document.getElementById('fContent').style.width=cs+'%';
+      updateConfScore();
+      // Update checklist
+      document.getElementById('chkContent').className='check-dot '+(cs>40?'cd-green':'cd-yellow');
+      if (S.wordCount>10) document.getElementById('chkIndustry').className='check-dot cd-yellow';
+      if (S.wordCount>25) document.getElementById('chkIndustry').className='check-dot cd-green';
+    };
+    S.recognition.start(); S.isRec=true;
+    document.getElementById('micBtn').textContent='🔴 Stop Recording';
+    document.getElementById('micBtn').classList.add('recording');
+    document.getElementById('recStatus').classList.add('show');
+    S.recSecs=0;
+    S.recInt=setInterval(()=>{
+      S.recSecs++;
+      document.getElementById('recTimer').textContent=S.recSecs+'s';
+      // Pace score
+      const ps=S.recSecs<30?Math.min(90,S.recSecs*3):90;
+      S.confScores.pace=ps;
+      document.getElementById('cPace').textContent=ps+'%';
+      document.getElementById('fPace').style.width=ps+'%';
+      // Delivery score
+      const ds=Math.min(85,40+S.recSecs*2);
+      S.confScores.delivery=ds;
+      document.getElementById('cDelivery').textContent=ds+'%';
+      document.getElementById('fDelivery').style.width=ds+'%';
+      updateConfScore();
+      // Timed popups
+      if (S.recSecs===8) addPopup('tip','💡','Add a specific example with numbers!');
+      if (S.recSecs===18) addPopup('good','👍','Good length — wrap up with impact!');
+      if (S.recSecs===30) addPopup('warn','⚠️','Keep it under 2 mins — be concise!');
+    },1000);
+  }
+}
+
+function updateConfScore() {
+  const avg=Math.round((S.confScores.content+S.confScores.pace+S.confScores.delivery)/3);
+  document.getElementById('confNum').textContent=avg+'%';
+  // Update emoji
+  let emoji='😐',label='Neutral';
+  if (avg>=75) { emoji='😊'; label='Confident!'; }
+  else if (avg>=50) { emoji='🙂'; label='Getting there'; }
+  else if (avg>=30) { emoji='😕'; label='Keep going'; }
+  document.getElementById('emojiBig').textContent=emoji;
+  document.getElementById('emojiLabel').textContent=label;
+}
+
+// BODY ANALYSIS SIMULATION
+function startAnalysis() {
+  setInterval(()=>{
+    const rand=(arr)=>arr[Math.floor(Math.random()*arr.length)];
+    const g=['High ✅','Good ✅','Great ✅'],w=['Medium ⚠️','OK ⚠️'],b=['Low ✅','Calm ✅'];
+    const conf=rand(Math.random()>0.3?g:w);
+    const post=Math.random()>0.25?rand(g):'Slouching ⚠️';
+    const eye=Math.random()>0.3?'Good ✅':'Wandering ⚠️';
+    const set=(id,v)=>{ const el=document.getElementById(id); if(!el)return; el.textContent=v; el.className='stat-val '+(v.includes('⚠️')?'sw':'sg'); };
+    set('sConf',conf); set('sPost',post); set('sEye',eye);
+    if (post==='Slouching ⚠️') { addPopup('warn','🪑','Slouching detected — sit up straight!'); document.getElementById('chkPosture').className='check-dot cd-red'; }
+    else document.getElementById('chkPosture').className='check-dot cd-green';
+    if (eye==='Wandering ⚠️') { addPopup('eye','👁️','Eye-Anchor: Look at the camera!'); document.getElementById('chkExpr').className='check-dot cd-yellow'; }
+    else document.getElementById('chkExpr').className='check-dot cd-green';
+    // Expression/pace checklist
+    document.getElementById('chkPace').className=S.recSecs>5?'check-dot cd-green':'check-dot cd-yellow';
+  },10000);
+}
+
+// SUBMIT ANSWER
+async function submitAnswer() {
+  const answer=document.getElementById('answerText').value.trim();
+  if (!answer) { alert('Please speak or type your answer!'); return; }
+  if (S.isRec) toggleMic();
+  stopSpeaking();
+  S.answers.push(answer);
+  const q=S.questions[S.currentQ];
+  document.getElementById('submitBtn').disabled=true;
+  const fl=document.getElementById('followupLoading');
+  fl.classList.add('show');
+  document.getElementById('followupText').textContent='🧠 Agnes-2.0-Flash analysing your answer...';
+  try {
+    setTimeout(()=>{ document.getElementById('followupText').textContent='🎬 Agnes-Video-V2.0 generating follow up...'; },2500);
+    const data=await fetch('/api/followup-video',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q.question,answer,companyName:S.company})}).then(r=>r.json());
+    fl.classList.remove('show');
+    document.getElementById('submitBtn').disabled=false;
+    addPopup(data.emoji==='✅'||data.emoji==='🌟'?'good':'warn',data.emoji||'💡',data.feedback||'Good answer!');
+    if (data.suggestedTerms?.length) addPopup('tip','💬','Try using: '+data.suggestedTerms.join(', '));
+    S.currentQ++;
+
+    // Show follow up question with avatar + TTS
+    const showFollowUp = (followup, videoUrl) => {
+      document.getElementById('questionText').textContent = '💡 Follow up: ' + followup;
+      if (videoUrl) {
+        document.getElementById('agnesVideoBox').style.display='block';
+        document.getElementById('aiAvatarBox').style.display='none';
+        document.getElementById('agnesVideo').src=videoUrl;
+        document.getElementById('agnesVideo').play();
+        addPopup('good','🎬','Agnes Video follow up ready!');
+      } else {
+        document.getElementById('agnesVideoBox').style.display='none';
+        document.getElementById('aiAvatarBox').style.display='flex';
+        speakQuestion('Follow up question: ' + followup);
+      }
+      document.getElementById('answerText').value='';
+    };
+
+    if (S.currentQ >= S.questions.length) {
+      showFollowUp(data.followup, data.videoUrl);
+      addPopup('good','🏁','Interview complete! Heading to quiz...');
+      setTimeout(()=>{
+        if (eyeAnchorInt) clearInterval(eyeAnchorInt);
+        document.getElementById('eyeAnchor').style.display='none';
+        stopSpeaking();
+        goTo('page-quiz',5); showQuiz();
+      }, data.videoUrl ? 8000 : 10000);
+    } else {
+      showFollowUp(data.followup, data.videoUrl);
+      setTimeout(()=>showQuestion(), data.videoUrl ? 7000 : 10000);
+    }
+  } catch(err) {
+    fl.classList.remove('show'); document.getElementById('submitBtn').disabled=false;
+    S.currentQ++;
+    if (S.currentQ>=S.questions.length) { goTo('page-quiz',5); showQuiz(); }
+    else showQuestion();
+  }
+}
+
+// POPUPS
+function addPopup(type,emoji,text) {
+  const area=document.getElementById('popupFixed');
+  const div=document.createElement('div');
+  div.className=`popup-item ${type}`;
+  div.innerHTML=`<span class="popup-emoji">${emoji}</span><span class="popup-text">${text}</span>`;
+  area.appendChild(div);
+  setTimeout(()=>{ if(div.parentNode) div.parentNode.removeChild(div); },5000);
+  while(area.children.length>4) area.removeChild(area.firstChild);
+}
+
+// ========================
+// STEP 5: QUIZ
+// ========================
+function showQuiz() {
+  if (!S.quizQuestions.length) S.quizQuestions=[{question:`What does ${S.company} primarily do?`,options:['Technology company','Restaurant chain','Clothing brand','Logistics'],answer:'A'},{question:`Where is ${S.company} headquartered?`,options:['New York','London','Singapore/USA','Tokyo'],answer:'C'}];
+  renderQuizQ();
+}
+function renderQuizQ() {
+  const q=S.quizQuestions[S.quizIdx]; if (!q) return;
+  document.getElementById('quizProg').textContent=`Question ${S.quizIdx+1} of ${S.quizQuestions.length}`;
+  document.getElementById('quizProgFill').style.width=`${((S.quizIdx+1)/S.quizQuestions.length)*100}%`;
+  document.getElementById('quizQ').textContent=q.question;
+  document.getElementById('quizFeedback').style.display='none';
+  document.getElementById('quizNextBtn').style.display='none';
+  const L=['A','B','C','D'];
+  document.getElementById('mcqOpts').innerHTML=(q.options||[]).map((o,i)=>`<div class="mcq-opt" id="mo${i}" onclick="selectOpt(${i},'${L[i]}','${q.answer}')""><div class="opt-letter">${L[i]}</div><span>${o}</span></div>`).join('');
+}
+function selectOpt(idx,letter,correct) {
+  document.querySelectorAll('.mcq-opt').forEach(o=>o.onclick=null);
+  const L=['A','B','C','D'];
+  const ci=L.indexOf(correct);
+  const el=document.getElementById('mo'+idx);
+  if (letter===correct) { el.classList.add('correct'); S.quizScore++; showQFb(true,'Correct! 🎉'); }
+  else { el.classList.add('wrong'); if(ci>=0) document.getElementById('mo'+ci)?.classList.add('correct'); showQFb(false,`Not quite! Correct answer is ${correct}.`); }
+  document.getElementById('quizNextBtn').style.display='block';
+}
+function showQFb(ok,msg) {
+  const fb=document.getElementById('quizFeedback');
+  fb.style.display='block';
+  fb.style.background=ok?'rgba(52,211,153,0.08)':'rgba(239,68,68,0.08)';
+  fb.style.border=ok?'1px solid rgba(52,211,153,0.2)':'1px solid rgba(239,68,68,0.2)';
+  fb.style.color=ok?'#34d399':'#ef4444';
+  fb.textContent=msg;
+}
+async function nextQuiz() {
+  S.quizIdx++;
+  if (S.quizIdx>=S.quizQuestions.length) {
+    showLoad('🖼️ Agnes-Image-2.0-Flash generating quiz result card...','');
+    try {
+      const r=await fetch('/api/quiz-result',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({score:S.quizScore,total:S.quizQuestions.length,companyName:S.company})}).then(r=>r.json());
+      document.getElementById('quizResultBox').style.display='block';
+      document.getElementById('quizResultBox').innerHTML=`<div style="font-size:14px;color:#34d399;font-weight:600;margin-bottom:10px;">🏆 Quiz Score: ${S.quizScore}/${S.quizQuestions.length}</div>${r.imageUrl?`<img src="${r.imageUrl}" style="max-width:100%;border-radius:11px;border:1px solid rgba(255,255,255,0.09);margin-bottom:12px;"/>`:''}`;
+    } catch(e) {}
+    hideLoad();
+    document.querySelector('.quiz-card').innerHTML=`<div style="text-align:center;padding:18px;"><div style="font-size:52px;font-weight:800;background:linear-gradient(135deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">${S.quizScore}/${S.quizQuestions.length}</div><div style="font-size:14px;color:rgba(255,255,255,0.5);margin:7px 0 22px;">Company Knowledge Score</div><button class="btn-primary" onclick="generateReport()">View Performance Report →</button></div>`;
+  } else renderQuizQ();
+}
+
+// ========================
+// STEP 6: REPORT
+// ========================
+async function generateReport() {
+  showLoad('📊 Agnes-2.0-Flash analysing interview...','Generating performance report card image');
+  try {
+    const data=await fetch('/api/final-report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({answers:S.answers,questions:S.questions.map(q=>q.question),companyName:S.company})}).then(r=>r.json());
+    S.reportData=data; hideLoad(); goTo('page-report',6); renderReport(data);
+    if (data.imageUrl) { document.getElementById('reportImgBox').style.display='block'; document.getElementById('reportImg').src=data.imageUrl; }
+  } catch(err) { hideLoad(); alert('Report error: '+err.message); }
+}
+function renderReport(d) {
+  const ok=(d.overallScore||0)>=65;
+  const str=(d.strengths||[]).map(s=>`<div class="si-item"><span>✅</span><span>${s}</span></div>`).join('');
+  const imp=(d.improvements||[]).map(i=>`<div class="si-item"><span>⚠️</span><span>${i}</span></div>`).join('');
+  document.getElementById('reportContent').innerHTML=`
+    <div class="verdict-box ${ok?'':'fail'}"><div style="font-size:32px;margin-bottom:7px;">${ok?'🎉':'📚'}</div><div style="font-size:18px;font-weight:700;">${d.verdict||'Keep practising!'}</div><div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:5px;">${d.topTip||''}</div></div>
+    <div class="score-grid">
+      <div class="score-card"><div class="score-num" style="background:linear-gradient(135deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">${d.overallScore||0}%</div><div class="score-lbl">Overall</div></div>
+      <div class="score-card"><div class="score-num" style="color:#34d399;">${d.contentScore||0}%</div><div class="score-lbl">Content</div></div>
+      <div class="score-card"><div class="score-num" style="color:#60a5fa;">${d.confidenceScore||0}%</div><div class="score-lbl">Confidence</div></div>
+      <div class="score-card"><div class="score-num" style="color:#fbbf24;">${d.bodyLanguageScore||0}%</div><div class="score-lbl">Body Language</div></div>
+    </div>
+    <div class="s-and-i"><div class="si-card"><h3 style="font-size:13px;font-weight:600;margin-bottom:10px;">💪 Strengths</h3>${str}</div><div class="si-card"><h3 style="font-size:13px;font-weight:600;margin-bottom:10px;">📈 Improve</h3>${imp}</div></div>
+    <div class="card"><div style="font-size:10px;color:#a78bfa;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Company Quiz</div><div style="font-size:28px;font-weight:800;color:#34d399;">${S.quizScore}/${S.quizQuestions.length}</div><div style="font-size:11px;color:rgba(255,255,255,0.4);">Company Knowledge Score</div></div>`;
+}
+
+// ========================
+// STEP 7: MODEL ANSWER
+// ========================
+async function generateModelAnswer() {
+  goTo('page-model',7);
+  const q=S.questions[0]; const answer=S.answers[0]||'';
+  document.getElementById('modelLoading').style.display='block';
+  document.getElementById('modelVideoBox').style.display='none';
+  try {
+    const data=await fetch('/api/model-answer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q?.question||'Tell me about yourself',answer,companyName:S.company})}).then(r=>r.json());
+    document.getElementById('modelLoading').style.display='none';
+    const kps=(data.keyPoints||[]).map((k,i)=>`<div class="kp-card"><span>Key Point ${i+1}</span>${k}</div>`).join('');
+    document.getElementById('modelContent').innerHTML=`
+      <div class="card card-purple"><div style="font-size:12px;font-weight:600;color:#a78bfa;margin-bottom:9px;">📝 Model Answer Script</div><p style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.8;">${data.modelAnswer||''}</p></div>
+      <div style="font-size:13px;font-weight:600;margin:14px 0 9px;">🎯 Key Points to Hit</div>
+      <div class="kp-grid">${kps}</div>
+      <div class="card"><div style="font-size:12px;font-weight:600;color:#fbbf24;margin-bottom:7px;">⚡ What to Improve</div><p style="font-size:12px;color:rgba(255,255,255,0.65);line-height:1.6;">${data.improvements||''}</p></div>`;
+    if (data.videoUrl) {
+      document.getElementById('modelVideoBox').style.display='block';
+      document.getElementById('modelVideo').src=data.videoUrl;
+      document.getElementById('modelVideo').play();
+    } else {
+      document.getElementById('modelVideoBox').style.display='block';
+      document.getElementById('modelVideoBox').innerHTML=`<div style="padding:28px;text-align:center;"><div style="font-size:13px;color:rgba(255,255,255,0.4);">Agnes Video is still processing...</div><div style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:6px;">Model answer script shown below</div></div>`;
+    }
+  } catch(err) {
+    document.getElementById('modelLoading').style.display='none';
+    document.getElementById('modelVideoBox').style.display='block';
+    document.getElementById('modelVideoBox').innerHTML=`<div style="padding:24px;text-align:center;color:#ef4444;font-size:12px;">Error: ${err.message}</div>`;
+  }
+}
+
+// ========================
+// RESET
+// ========================
+function resetApp() {
+  S={company:'',resume:'',jd:'',questions:[],answers:[],currentQ:0,videoUrls:[],companyData:null,resumeData:null,reportData:null,quizQuestions:[],quizIdx:0,quizScore:0,isRec:false,recognition:null,recSecs:0,recInt:null,confScores:{content:0,pace:0,delivery:0},wordCount:0};
+  document.getElementById('companyName').value='';
+  document.getElementById('resumeText').value='';
+  document.getElementById('jobDescText').value='';
+  document.getElementById('resumeFileName').textContent='';
+  document.getElementById('stepsNav').style.display='none';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-home').classList.add('active');
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
