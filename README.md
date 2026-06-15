@@ -9,7 +9,7 @@ An interview preparation app that simulates realistic job interviews through a l
 
   * Improves and redesigns uploaded resumes into more polished and job-tailored versions.
   * Creates visual coaching elements such as progress indicators, encouragement graphics, feedback overlays, and interviewer avatars.
-  * Generates visual summaries of interview performance and growth across attempts.
+  * Generates visual summaries of interview performance and growth across attempts, which is generated near the camera to ensure sustained eye contact.
 
 * **LLM (Large Language Model)**
 
@@ -18,6 +18,7 @@ An interview preparation app that simulates realistic job interviews through a l
   * Evaluates each recorded answer against role-specific expectations.
   * Produces feedback, improvement checklists, coaching tips, and refined model answers.
   * Compares multiple user attempts and identifies measurable improvements over time.
+  * A real-time, tri-colour emotive metric system that updates continuously to provide the user with instantaneous feedback       on their overall delivery, tone, and somatic presence.
 
 * **Video Generation**
 
