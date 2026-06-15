@@ -1,27 +1,27 @@
 #### APP: Employde
 
-Here’s a concise description of the idea and how each AI component is used:
-
-**Idea: AI Interview Coach with Live Feedback and Personalized Response Training**
-An interview preparation app that simulates realistic job interviews through a live AI interviewer. Users upload their resume and target job description beforehand, allowing the system to personalize questions, expectations, and coaching. During the interview, users record themselves answering questions while receiving real-time encouragement, reminders, and guidance through on-screen text and emojis. After each response, the app provides instant feedback, a checklist of evaluation criteria met or missed, and generates an ideal sample answer video tailored to the user’s profile and the role.
+**Idea: AI Interview Coach with Live Feedback, Iterative Practice, and Personalized Response Training**
+An interview preparation app that simulates realistic job interviews through a live AI interviewer. Users upload their resume and target job description beforehand so the system can tailor questions, evaluation criteria, and coaching to the specific role. During the interview, users record themselves answering questions while receiving real-time encouragement, reminders, and guidance through on-screen text and emojis. After each response, the app provides immediate feedback, highlights areas for improvement, and shows a checklist of criteria fulfilled or missed. The system then generates a personalized “ideal response” video demonstrating how the answer could be improved. Users can immediately **redo each interview question multiple times**, applying the feedback in real time and tracking improvement across attempts until they are satisfied with their performance.
 
 ### How it uses each technology
 
 * **Image Generation**
 
-  * Enhances and redesigns the user’s uploaded resume into a more polished, ATS-friendly, and job-tailored format.
-  * Generates visual feedback elements (progress indicators, encouragement graphics, reaction emojis, interview analytics visuals).
-  * Can create visual avatars for the AI interviewer.
+  * Improves and redesigns uploaded resumes into more polished and job-tailored versions.
+  * Creates visual coaching elements such as progress indicators, encouragement graphics, feedback overlays, and interviewer avatars.
+  * Generates visual summaries of interview performance and growth across attempts.
 
 * **LLM (Large Language Model)**
 
-  * Analyzes the uploaded resume and job description to personalize interview questions.
-  * Acts as the live interviewer by generating adaptive follow-up questions.
-  * Evaluates user responses based on content, structure, relevance, confidence signals, and interview frameworks.
-  * Produces improvement suggestions, completion checklists, and crafts the “ideal” answer script.
+  * Analyzes the resume and job description to personalize interview questions.
+  * Powers the live interviewer and generates adaptive follow-up questions.
+  * Evaluates each recorded answer against role-specific expectations.
+  * Produces feedback, improvement checklists, coaching tips, and refined model answers.
+  * Compares multiple user attempts and identifies measurable improvements over time.
 
 * **Video Generation**
 
-  * Creates a personalized sample response video after each question that demonstrates the recommended delivery, wording, pacing, and body language.
-  * Generates an AI presenter/avatar showing the model answer in interview format.
-  * Can produce side-by-side comparison videos between the user’s answer and the optimized version.
+  * Generates personalized model-answer videos showing ideal delivery, structure, and communication style.
+  * Produces AI interviewer interactions for realistic practice.
+  * Creates replay and comparison views between previous attempts and improved responses so users can iteratively refine their interview performance question by question.
+
